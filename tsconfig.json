@@ -8,12 +8,12 @@
       "ES7",
       "dom",
       "dom.iterable",
-      "esnext"
+      "esnext",
     ],
     "allowJs": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
-    "allowSyntheticDefaultImports": false,
+//    "allowSyntheticDefaultImports": false,
     "allowUnreachableCode": false,
     "strictNullChecks": false,
     "strict": true,
@@ -26,7 +26,6 @@
     "resolveJsonModule": true,
     "isolatedModules": false,
     "noEmit": true,
-    "jsx": "preserve"
   },
   "include": [
     "src"

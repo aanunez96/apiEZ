@@ -6,10 +6,11 @@
   "author": "aanunez96",
   "license": "MIT",
   "scripts": {
-    "start": "node src/app.ts",
+    "start": "nodemon src/app.ts",
     "lint": "CI=true eslint 'src/**/*.{ts,tsx,js}' "
   },
   "dependencies": {
+    "@prisma/client": "3.0.1",
     "@types/node": "^16.7.13",
     "@typescript-eslint/eslint-plugin": "^4.29.3",
     "@typescript-eslint/parser": "^4.29.3",
@@ -19,7 +20,9 @@
     "eslint-plugin-promise": "^5.1.0",
     "eslint-plugin-unicorn": "^29.0.0",
     "express": "^4.17.1",
-    "prisma": "^3.0.1",
+    "nodemon": "^2.0.12",
+    "prisma": "3.0.1",
+    "ts-node": "^10.2.1",
     "typescript": "^4.3.5"
   },
   "devDependencies": {
