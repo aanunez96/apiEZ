@@ -1,16 +1,18 @@
 // @ts-ignore
 const { PrismaClient } = require('@prisma/client');
+// @ts-ignore
+const express = require('express');
 // eslint-disable-next-line no-shadow,no-unused-vars
-// enum ActionMethodType {
-//   // eslint-disable-next-line no-unused-vars
-//   CREATE = 'CREATE',
-//   // eslint-disable-next-line no-unused-vars
-//   READ = 'READ',
-//   // eslint-disable-next-line no-unused-vars
-//   UPDATE = 'UPDATE',
-//   // eslint-disable-next-line no-unused-vars
-//   DELETE = 'DELETE',
-// }
+enum ActionMethodType {
+  // eslint-disable-next-line no-unused-vars
+  CREATE = 'CREATE',
+  // eslint-disable-next-line no-unused-vars
+  READ = 'READ',
+  // eslint-disable-next-line no-unused-vars
+  UPDATE = 'UPDATE',
+  // eslint-disable-next-line no-unused-vars
+  DELETE = 'DELETE',
+}
 
 interface Filter {
   fields?: string[] // named on fields for the model above
@@ -29,7 +31,7 @@ interface Pagination {
 }
 
 interface replaceAction {
-  actionType: string;
+  actionType: ActionMethodType;
   // eslint-disable-next-line no-unused-vars
   action: (prismaModelInstance, req, res) => any[] // action method
 }
@@ -50,20 +52,24 @@ interface Methods {
   onPagination: (prismaModelInstance) => any[]
 }
 
+// @ts-ignore
 class ApiEz {
   models: object;
 
   methods: Methods;
 
-  expressInstance;
+  expressInstance: typeof express;
+
+  prismaInstance: typeof PrismaClient;
 
   constructor(
     prismaInstance: typeof PrismaClient,
-    expressInstance,
+    expressInstance: typeof express,
     options?: Options,
     replaceDefaultsMethod?: Methods,
   ) {
     this.expressInstance = expressInstance;
+    this.prismaInstance = prismaInstance;
 
     this.methods = {
       onFilter: replaceDefaultsMethod?.onFilter || undefined,
@@ -88,8 +94,59 @@ class ApiEz {
   }
 
   init() {
-    // @ts-ignore
-    console.log(this.models.Post);
+    Object.keys(this.models).forEach((model) => {
+      const modelName = model.toLowerCase();
+      this.expressInstance.post(`/${modelName}`, async (req, res) => {
+        try {
+          const result = await this.prismaInstance[modelName].create({
+            data: req.body,
+          });
+          res.json(result);
+        } catch (error) {
+          res.json({ error });
+          throw error;
+        }
+      });
+
+      this.expressInstance.get(`/${modelName}`, async (_req, res) => {
+        try {
+          const entities = await this.prismaInstance[modelName].findMany();
+          res.json(entities);
+        } catch (error) {
+          res.json({ error });
+          throw error;
+        }
+      });
+
+      this.expressInstance.put(`/${modelName}/:id`, async (req, res) => {
+        try {
+          const { id } = req.params;
+          const post = await this.prismaInstance[modelName].update({
+            where: { id },
+            data: req.body,
+          });
+          res.json(post);
+        } catch (error) {
+          res.json({ error });
+          throw error;
+        }
+      });
+
+      this.expressInstance.delete(`/${modelName}/:id`, async (req, res) => {
+        try {
+          const { id } = req.params;
+          const user = await this.prismaInstance[modelName].user.delete({
+            where: {
+              id,
+            },
+          });
+          res.json(user);
+        } catch (error) {
+          res.json({ error });
+          throw error;
+        }
+      });
+    });
   }
 }
 

@@ -1,13 +1,17 @@
+// @ts-ignore
 const express = require('express');
 // @ts-ignore
 const { PrismaClient } = require('@prisma/client');
-const Apiez = require('./lib/main.ts');
+// @ts-ignore
+const ApiEz = require('./lib/main.ts');
 
 const prisma = new PrismaClient();
 
 const app = express();
+app.use(express.json());
+
 const port = 3001;
-const apies = new Apiez(prisma, express);
+const apies = new ApiEz(prisma, app);
 apies.init();
 
 app.get('/', (_req, res) => {
