@@ -104,18 +104,18 @@ class ApiEz {
       });
 
       this.expressInstance.get(`/${modelName}`, async (req, res) => {
-        // TODO: check the field type
-        const allField = this.models[model].fields;
-        const onFilter = this.models[model].options.filter || this.methods.onFilter;
-        const onSearch = this.models[model].options.search || this.methods.onSearch;
-        const onPagination = this.models[model].options.pagination || this.methods.onPagination;
+        // TODO: Handle Foreign Key and Object
+        const nameFields = this.models[model].fields.map((f) => f.name);
+        const onFilter = this.models[model]?.options?.filter || this.methods.onFilter;
+        const onSearch = this.models[model]?.options?.search || this.methods.onSearch;
+        const onPagination = this.models[model]?.options?.pagination || this.methods.onPagination;
         try {
           const queryParams = {
             where: {
-              ...onFilter(req.params, allField),
-              ...onSearch(req.params, allField),
+              ...onFilter(req.params, nameFields),
+              ...onSearch(req.params, nameFields),
             },
-            ...getOrder(req.params, allField),
+            ...getOrder(req.params, nameFields),
             ...onPagination(req.params),
           };
           const entities = await this.prismaInstance[modelName].findMany(queryParams);
