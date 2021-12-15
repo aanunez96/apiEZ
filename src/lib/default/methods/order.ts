@@ -2,25 +2,22 @@ function order(query, allFields: string[]) {
   if (!query?.ordering) {
     return {};
   }
-
-  const orders = Array.isArray(query?.ordering)
-    ? query?.ordering.reduce((parameters, field) => {
-      if (allFields.includes(field) || allFields.includes(`-${field}`)) {
-        return {
-          ...parameters,
-          [field]: field.charAt(0) === '-' ? 'desc' : 'asc',
-        };
-      }
+  const ordering = Array.isArray(query?.ordering) ? query?.ordering : [query?.ordering];
+  const orderBy = ordering.reduce((parameters, orderingValue) => {
+    const field = orderingValue.replace('-', '');
+    if (allFields.includes(field)) {
       return {
         ...parameters,
+        [field]: orderingValue.charAt(0) === '-' ? 'desc' : 'asc',
       };
-    }, {} as any)
-    : {
-      [query?.ordering]: query?.ordering.charAt(0) === '-' ? 'desc' : 'asc',
+    }
+    return {
+      ...parameters,
     };
+  }, {} as any);
 
   return {
-    orderBy: orders,
+    orderBy,
   };
 }
 
