@@ -77,7 +77,7 @@ class ApiEz {
       (total, { name, fields }) => ({
         ...total,
         [name]: {
-          fields,
+          fields, // TODO: change format to object with attr name as object key and object with all data we will need as value then check all places we are using this
           filter: options?.filter[name],
           pagination: options?.pagination[name],
           search: options?.search[name],
@@ -105,18 +105,19 @@ class ApiEz {
 
       this.expressInstance.get(`/${modelName}`, async (req, res) => {
         // TODO: Handle Foreign Key and Object
-        const nameFields = this.models[model].fields.map((f) => f.name);
+        const { fields } = this.models[model];
+        const nameFields = fields.map((f) => f.name);
         const onFilter = this.models[model]?.options?.filter || this.methods.onFilter;
         const onSearch = this.models[model]?.options?.search || this.methods.onSearch;
         const onPagination = this.models[model]?.options?.pagination || this.methods.onPagination;
         try {
           const queryParams = {
             where: {
-              ...onFilter(req.params, nameFields),
-              ...onSearch(req.params, nameFields),
+              ...onSearch(req.query, fields),
+              ...onFilter(req.query, fields),
             },
-            ...getOrder(req.params, nameFields),
-            ...onPagination(req.params),
+            ...getOrder(req.query, nameFields),
+            ...onPagination(req.query),
           };
           const entities = await this.prismaInstance[modelName].findMany(queryParams);
           res.json(entities);
@@ -160,3 +161,4 @@ class ApiEz {
 
 module.exports = ApiEz;
 // TODO: replace every end point as a function for reutilice it on return it and use in endpoint
+// TODO: handle int filters (lte, gte and stuff like that)

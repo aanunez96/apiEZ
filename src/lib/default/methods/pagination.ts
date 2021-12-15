@@ -3,7 +3,7 @@ function pagination(query) {
     return {};
   }
   const take = query?.page_size || 10;
-  const skip = query?.page * take;
+  const skip = (query?.page - 1) * take;
   return {
     take,
     skip,
