@@ -9,6 +9,9 @@
     "start": "nodemon src/app.ts",
     "lint": "CI=true eslint 'src/**/*.{ts,tsx,js}' "
   },
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
+  },
   "dependencies": {
     "@prisma/client": "3.0.1",
     "@types/node": "^16.7.13",
