@@ -7,6 +7,12 @@ const getOrder = require('./default/methods/order.ts');
 const getFilter = require('./default/methods/filter.ts');
 const getSearch = require('./default/methods/search.ts');
 
+const createAct = require('./default/actions/create.ts');
+const deleteAct = require('./default/actions/delete.ts');
+const getOneAct = require('./default/actions/get-one.ts');
+const updateAct = require('./default/actions/update.ts');
+const readAct = require('./default/actions/read.ts');
+
 interface Methods {
   // eslint-disable-next-line no-unused-vars
   onFilter?: (params, allField?) => {[field: string]: {[parameter: string]: string }}
@@ -18,13 +24,15 @@ interface Methods {
 
 interface Action {
   // eslint-disable-next-line no-unused-vars
-  CREATE?: (prismaModelInstance, req, res) => any // action method
+  CREATE?: (modelName, body) => any // action method
   // eslint-disable-next-line no-unused-vars
-  READ?: (prismaModelInstance, req, res) => any // action method
+  READ?: (modelName, queryParams, req?) => any //
   // eslint-disable-next-line no-unused-vars
-  UPDATE?: (prismaModelInstance, req, res) => any // action method
+  GET_ONE?: (modelName, id) => any // action method
   // eslint-disable-next-line no-unused-vars
-  DELETE?: (prismaModelInstance, req, res) => any // action method
+  UPDATE?: (modelName, id, body) => any // action method
+  // eslint-disable-next-line no-unused-vars
+  DELETE?: (modelName, id) => any // action method
 }
 
 interface Options {
@@ -59,19 +67,6 @@ class ApiEz {
     this.expressInstance = expressInstance;
     this.prismaInstance = prismaInstance;
 
-    this.methods = {
-      onFilter: replaceDefaultsMethod?.onFilter || getFilter,
-      onPagination: replaceDefaultsMethod?.onPagination || getPagination,
-      onSearch: replaceDefaultsMethod?.onSearch || getSearch,
-    };
-
-    this.actions = {
-      CREATE: replaceDefaultsAction?.CREATE || undefined,
-      READ: replaceDefaultsAction?.READ || undefined,
-      UPDATE: replaceDefaultsAction?.UPDATE || undefined,
-      DELETE: replaceDefaultsAction?.DELETE || undefined,
-    };
-
     // eslint-disable-next-line no-undef,no-underscore-dangle
     this.models = (prismaInstance._dmmf.datamodel.models as any[]).reduce(
       (total, { name, fields }) => ({
@@ -86,17 +81,41 @@ class ApiEz {
       }),
       {} as any,
     );
+
+    this.methods = {
+      onFilter: replaceDefaultsMethod?.onFilter || getFilter,
+      onPagination: replaceDefaultsMethod?.onPagination || getPagination,
+      onSearch: replaceDefaultsMethod?.onSearch || getSearch,
+    };
+
+    this.actions = {
+      CREATE: replaceDefaultsAction?.CREATE || createAct(prismaInstance),
+      READ: replaceDefaultsAction?.READ || readAct(prismaInstance),
+      UPDATE: replaceDefaultsAction?.UPDATE || updateAct(prismaInstance),
+      DELETE: replaceDefaultsAction?.DELETE || deleteAct(prismaInstance),
+      GET_ONE: replaceDefaultsAction?.GET_ONE || getOneAct(prismaInstance),
+    };
   }
 
   init() {
     Object.keys(this.models).forEach((model) => {
       const modelName = model.toLowerCase();
+
       this.expressInstance.post(`/${modelName}`, async (req, res) => {
         try {
-          const result = await this.prismaInstance[modelName].create({
-            data: req.body,
-          });
+          const result = await this.actions.CREATE(modelName, req.body);
           res.json(result);
+        } catch (error) {
+          res.json({ error });
+          throw error;
+        }
+      });
+
+      this.expressInstance.get(`/${modelName}/:id`, async (req, res) => {
+        try {
+          const { id } = req.params;
+          const user = await this.actions.GET_ONE(modelName, id);
+          res.json(user);
         } catch (error) {
           res.json({ error });
           throw error;
@@ -106,7 +125,6 @@ class ApiEz {
       this.expressInstance.get(`/${modelName}`, async (req, res) => {
         // TODO: Handle Foreign Key and Object
         const { fields } = this.models[model];
-        const nameFields = fields.map((f) => f.name);
         const onFilter = this.models[model]?.options?.filter || this.methods.onFilter;
         const onSearch = this.models[model]?.options?.search || this.methods.onSearch;
         const onPagination = this.models[model]?.options?.pagination || this.methods.onPagination;
@@ -116,11 +134,12 @@ class ApiEz {
               ...onSearch(req.query, fields),
               ...onFilter(req.query, fields),
             },
-            ...getOrder(req.query, nameFields),
+            ...getOrder(req.query, fields),
             ...onPagination(req.query),
           };
-          const entities = await this.prismaInstance[modelName].findMany(queryParams);
-          res.json(entities);
+          const count = await this.prismaInstance[modelName].count();
+          const results = await this.actions.READ(modelName, queryParams, req);
+          res.json({ count, results });
         } catch (error) {
           res.json({ error });
           throw error;
@@ -130,10 +149,7 @@ class ApiEz {
       this.expressInstance.put(`/${modelName}/:id`, async (req, res) => {
         try {
           const { id } = req.params;
-          const post = await this.prismaInstance[modelName].update({
-            where: { id },
-            data: req.body,
-          });
+          const post = await this.actions.UPDATE(modelName, id, req.body);
           res.json(post);
         } catch (error) {
           res.json({ error });
@@ -144,11 +160,7 @@ class ApiEz {
       this.expressInstance.delete(`/${modelName}/:id`, async (req, res) => {
         try {
           const { id } = req.params;
-          const user = await this.prismaInstance[modelName].user.delete({
-            where: {
-              id,
-            },
-          });
+          const user = await this.actions.DELETE(modelName, id);
           res.json(user);
         } catch (error) {
           res.json({ error });
@@ -160,5 +172,4 @@ class ApiEz {
 }
 
 module.exports = ApiEz;
-// TODO: replace every end point as a function for reutilice it on return it and use in endpoint
 // TODO: handle int filters (lte, gte and stuff like that)
