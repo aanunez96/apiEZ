@@ -2,8 +2,11 @@
 const { PrismaClient } = require('@prisma/client');
 // @ts-ignore
 const express = require('express');
+
+const getOrder = require('./default/util/order.ts');
+const getPopulation = require('./default/util/population.ts');
+
 const getPagination = require('./default/methods/pagination.ts');
-const getOrder = require('./default/methods/order.ts');
 const getFilter = require('./default/methods/filter.ts');
 const getSearch = require('./default/methods/search.ts');
 
@@ -123,7 +126,6 @@ class ApiEz {
       });
 
       this.expressInstance.get(`/${modelName}`, async (req, res) => {
-        // TODO: Handle Foreign Key and Object
         const { fields } = this.models[model];
         const onFilter = this.models[model]?.options?.filter || this.methods.onFilter;
         const onSearch = this.models[model]?.options?.search || this.methods.onSearch;
@@ -136,6 +138,7 @@ class ApiEz {
             },
             ...getOrder(req.query, fields),
             ...onPagination(req.query),
+            ...getPopulation(fields),
           };
           const count = await this.prismaInstance[modelName].count();
           const results = await this.actions.READ(modelName, queryParams, req);
