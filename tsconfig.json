@@ -13,7 +13,7 @@
     "allowJs": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
-//    "allowSyntheticDefaultImports": false,
+    "allowSyntheticDefaultImports": false,
     "allowUnreachableCode": false,
     "strictNullChecks": false,
     "strict": true,
@@ -27,7 +27,5 @@
     "isolatedModules": false,
     "noEmit": true,
   },
-  "include": [
-    "src"
-  ]
+  "include": ["src/**/*"]
 }

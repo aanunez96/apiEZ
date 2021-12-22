@@ -1,10 +1,7 @@
-const { formatterFilterValue: formatter } = require('./helper.ts');
-
-const typeWithFormatters = ['String', 'Boolean', 'Int'];
+const { formatterQueryValue: formatter } = require('../util/query_formatter.ts');
 
 function filter(query, allFields: any[]) {
   const nameFields = allFields
-    .filter((f) => typeWithFormatters.includes(f.type)) // TODO: this filter is because of we just add formatter function for string and int, we must add filter for all types
     .reduce((fields, { name, ...rest }) => ({
       ...fields,
       [name]: rest.type,

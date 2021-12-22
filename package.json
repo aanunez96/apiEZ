@@ -1,8 +1,8 @@
 {
-  "name": "ez_fy",
+  "name": "api-ez",
   "version": "1.0.0",
   "description": "a simple way to make APIs",
-  "main": "index.js",
+  "main": "lib/main.ts",
   "author": "aanunez96",
   "license": "MIT",
   "scripts": {
@@ -22,13 +22,13 @@
     "typescript": "^4.3.5"
   },
   "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^4.29.3",
+    "@typescript-eslint/parser": "^4.29.3",
     "eslint": "^5.16.0",
     "eslint-config-airbnb-base": "^14.2.1",
     "eslint-plugin-eslint-comments": "^3.2.0",
     "eslint-plugin-import": "^2.22.1",
     "eslint-plugin-promise": "^5.1.0",
-    "eslint-plugin-unicorn": "^29.0.0",
-    "@typescript-eslint/eslint-plugin": "^4.29.3",
-    "@typescript-eslint/parser": "^4.29.3"
+    "eslint-plugin-unicorn": "^29.0.0"
   }
 }

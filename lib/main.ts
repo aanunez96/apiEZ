@@ -5,6 +5,7 @@ const express = require('express');
 
 const getOrder = require('./default/util/order.ts');
 const getPopulation = require('./default/util/population.ts');
+const getComparison = require('./default/util/comparison.ts');
 
 const getPagination = require('./default/methods/pagination.ts');
 const getFilter = require('./default/methods/filter.ts');
@@ -31,7 +32,7 @@ interface Action {
   // eslint-disable-next-line no-unused-vars
   READ?: (modelName, queryParams, req?) => any //
   // eslint-disable-next-line no-unused-vars
-  GET_ONE?: (modelName, id) => any // action method
+  GET_ONE?: (modelName, queryParams, id?) => any // action method
   // eslint-disable-next-line no-unused-vars
   UPDATE?: (modelName, id, body) => any // action method
   // eslint-disable-next-line no-unused-vars
@@ -75,7 +76,7 @@ class ApiEz {
       (total, { name, fields }) => ({
         ...total,
         [name]: {
-          fields, // TODO: change format to object with attr name as object key and object with all data we will need as value then check all places we are using this
+          fields,
           filter: options?.filter[name],
           pagination: options?.pagination[name],
           search: options?.search[name],
@@ -103,6 +104,7 @@ class ApiEz {
   init() {
     Object.keys(this.models).forEach((model) => {
       const modelName = model.toLowerCase();
+      const { fields } = this.models[model];
 
       this.expressInstance.post(`/${modelName}`, async (req, res) => {
         try {
@@ -117,7 +119,13 @@ class ApiEz {
       this.expressInstance.get(`/${modelName}/:id`, async (req, res) => {
         try {
           const { id } = req.params;
-          const user = await this.actions.GET_ONE(modelName, id);
+          const queryParams = {
+            where: {
+              id: parseInt(id, 10),
+            },
+            ...getPopulation(fields),
+          };
+          const user = await this.actions.GET_ONE(modelName, queryParams, id);
           res.json(user);
         } catch (error) {
           res.json({ error });
@@ -126,13 +134,13 @@ class ApiEz {
       });
 
       this.expressInstance.get(`/${modelName}`, async (req, res) => {
-        const { fields } = this.models[model];
         const onFilter = this.models[model]?.options?.filter || this.methods.onFilter;
         const onSearch = this.models[model]?.options?.search || this.methods.onSearch;
         const onPagination = this.models[model]?.options?.pagination || this.methods.onPagination;
         try {
           const queryParams = {
             where: {
+              ...getComparison(req.query, fields),
               ...onSearch(req.query, fields),
               ...onFilter(req.query, fields),
             },
@@ -175,4 +183,3 @@ class ApiEz {
 }
 
 module.exports = ApiEz;
-// TODO: handle int filters (lte, gte and stuff like that)
