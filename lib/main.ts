@@ -7,7 +7,7 @@ const getOrder = require('./default/util/order.ts');
 const getPopulation = require('./default/util/population.ts');
 const getComparison = require('./default/util/comparison.ts');
 
-const getPagination = require('./default/methods/pagination.ts');
+const { pagination: getPagination, structure: getStructure } = require('./default/methods/pagination.ts');
 const getFilter = require('./default/methods/filter.ts');
 const getSearch = require('./default/methods/search.ts');
 
@@ -150,7 +150,8 @@ class ApiEz {
           };
           const count = await this.prismaInstance[modelName].count();
           const results = await this.actions.READ(modelName, queryParams, req);
-          res.json({ count, results });
+          const fullUrl = `${req.protocol}://${req.get('host')}${req.url}`;
+          res.json(getStructure(req.query, count, results, fullUrl));
         } catch (error) {
           res.json({ error });
           throw error;
