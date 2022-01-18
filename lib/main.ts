@@ -1,32 +1,37 @@
-// @ts-ignore
-const { PrismaClient } = require('@prisma/client');
-// @ts-ignore
-const express = require('express');
+import createAction from './default/actions/create';
+import readAction from './default/actions/read';
+import updateAction from './default/actions/update';
+import getOneAction from './default/actions/get-one';
+import deleteAction from './default/actions/delete';
 
-const getOrder = require('./default/util/order.ts');
-const getPopulation = require('./default/util/population.ts');
-const getComparison = require('./default/util/comparison.ts');
+import order from './default/util/order';
+import population from './default/util/population';
+import comparison from './default/util/comparison';
+import structure from './default/util/structure';
 
-const { pagination: getPagination, structure: getStructure } = require('./default/methods/pagination.ts');
-const getFilter = require('./default/methods/filter.ts');
-const getSearch = require('./default/methods/search.ts');
+import filter from './default/methods/filter';
+import pagination from './default/methods/pagination';
+import search from './default/methods/search';
 
-const createAct = require('./default/actions/create.ts');
-const deleteAct = require('./default/actions/delete.ts');
-const getOneAct = require('./default/actions/get-one.ts');
-const updateAct = require('./default/actions/update.ts');
-const readAct = require('./default/actions/read.ts');
-
-interface Methods {
-  // eslint-disable-next-line no-unused-vars
-  onFilter?: (params, allField?) => {[field: string]: {[parameter: string]: string }}
-  // eslint-disable-next-line no-unused-vars
-  onSearch?: (params, allField?) => {[field: string]: {[parameter: string]: string }}
-  // eslint-disable-next-line no-unused-vars
-  onPagination?: (params) => { take: number; skip: number; }
+type CommonResponse = {
+  [field: string]: {[parameter: string]: string }
 }
 
-interface Action {
+type PaginationResponse = {
+  take?: number;
+  skip?: number;
+}
+
+type Methods = {
+  // eslint-disable-next-line no-unused-vars
+  onFilter?: (params: string, allField?) => CommonResponse
+  // eslint-disable-next-line no-unused-vars
+  onSearch?: (params, allField?) => CommonResponse
+  // eslint-disable-next-line no-unused-vars
+  onPagination?: (params) => PaginationResponse
+}
+
+type Action = {
   // eslint-disable-next-line no-unused-vars
   CREATE?: (modelName, body) => any // action method
   // eslint-disable-next-line no-unused-vars
@@ -39,31 +44,30 @@ interface Action {
   DELETE?: (modelName, id) => any // action method
 }
 
-interface Options {
+type Options = {
   // eslint-disable-next-line no-unused-vars
-  filter?: { [model: string]: (params, allField?) => {[field: string]: {[parameter: string]: string }} },
+  filter?: { [model: string]: (params, allField?) => CommonResponse }
   // eslint-disable-next-line no-unused-vars
-  search?: { [model: string]: (params, allField?) => {[field: string]: {[parameter: string]: string }} },
+  search?: { [model: string]: (params, allField?) => CommonResponse }
   // eslint-disable-next-line no-unused-vars
-  pagination?: { [model: string]: (params) => { take: number; skip: number; } },
-  replaceActions?: { [model: string]: Action },
+  pagination?: { [model: string]: (params) => PaginationResponse }
+  replaceActions?: { [model: string]: Action }
 }
 
-// @ts-ignore
-class ApiEz {
+export default class ApiEz {
   models: object;
 
   methods: Methods;
 
   actions: Action;
 
-  expressInstance: typeof express;
+  expressInstance: any;
 
-  prismaInstance: typeof PrismaClient;
+  prismaInstance: any;
 
   constructor(
-    prismaInstance: typeof PrismaClient,
-    expressInstance: typeof express,
+    prismaInstance: any,
+    expressInstance: any,
     options?: Options,
     replaceDefaultsMethod?: Methods,
     replaceDefaultsAction?: Action,
@@ -71,7 +75,7 @@ class ApiEz {
     this.expressInstance = expressInstance;
     this.prismaInstance = prismaInstance;
 
-    // eslint-disable-next-line no-undef,no-underscore-dangle
+    // eslint-disable-next-line no-underscore-dangle
     this.models = (prismaInstance._dmmf.datamodel.models as any[]).reduce(
       (total, { name, fields }) => ({
         ...total,
@@ -87,17 +91,17 @@ class ApiEz {
     );
 
     this.methods = {
-      onFilter: replaceDefaultsMethod?.onFilter || getFilter,
-      onPagination: replaceDefaultsMethod?.onPagination || getPagination,
-      onSearch: replaceDefaultsMethod?.onSearch || getSearch,
+      onFilter: replaceDefaultsMethod?.onFilter || filter,
+      onPagination: replaceDefaultsMethod?.onPagination || pagination,
+      onSearch: replaceDefaultsMethod?.onSearch || search,
     };
 
     this.actions = {
-      CREATE: replaceDefaultsAction?.CREATE || createAct(prismaInstance),
-      READ: replaceDefaultsAction?.READ || readAct(prismaInstance),
-      UPDATE: replaceDefaultsAction?.UPDATE || updateAct(prismaInstance),
-      DELETE: replaceDefaultsAction?.DELETE || deleteAct(prismaInstance),
-      GET_ONE: replaceDefaultsAction?.GET_ONE || getOneAct(prismaInstance),
+      CREATE: replaceDefaultsAction?.CREATE || createAction(prismaInstance),
+      READ: replaceDefaultsAction?.READ || readAction(prismaInstance),
+      UPDATE: replaceDefaultsAction?.UPDATE || updateAction(prismaInstance),
+      DELETE: replaceDefaultsAction?.DELETE || deleteAction(prismaInstance),
+      GET_ONE: replaceDefaultsAction?.GET_ONE || getOneAction(prismaInstance),
     };
   }
 
@@ -109,6 +113,7 @@ class ApiEz {
       this.expressInstance.post(`/${modelName}`, async (req, res) => {
         try {
           const result = await this.actions.CREATE(modelName, req.body);
+
           res.json(result);
         } catch (error) {
           res.json({ error });
@@ -123,9 +128,10 @@ class ApiEz {
             where: {
               id: parseInt(id, 10),
             },
-            ...getPopulation(fields),
+            ...population(fields),
           };
           const user = await this.actions.GET_ONE(modelName, queryParams, id);
+
           res.json(user);
         } catch (error) {
           res.json({ error });
@@ -137,21 +143,23 @@ class ApiEz {
         const onFilter = this.models[model]?.options?.filter || this.methods.onFilter;
         const onSearch = this.models[model]?.options?.search || this.methods.onSearch;
         const onPagination = this.models[model]?.options?.pagination || this.methods.onPagination;
+
         try {
           const queryParams = {
             where: {
-              ...getComparison(req.query, fields),
+              ...comparison(req.query, fields),
               ...onSearch(req.query, fields),
               ...onFilter(req.query, fields),
             },
-            ...getOrder(req.query, fields),
+            ...order(req.query, fields),
             ...onPagination(req.query),
-            ...getPopulation(fields),
+            ...population(fields),
           };
           const count = await this.prismaInstance[modelName].count();
           const results = await this.actions.READ(modelName, queryParams, req);
           const fullUrl = `${req.protocol}://${req.get('host')}${req.url}`;
-          res.json(getStructure(req.query, count, results, fullUrl));
+
+          res.json(structure(req.query, count, results, fullUrl));
         } catch (error) {
           res.json({ error });
           throw error;
@@ -162,6 +170,7 @@ class ApiEz {
         try {
           const { id } = req.params;
           const post = await this.actions.UPDATE(modelName, id, req.body);
+
           res.json(post);
         } catch (error) {
           res.json({ error });
@@ -173,6 +182,7 @@ class ApiEz {
         try {
           const { id } = req.params;
           const user = await this.actions.DELETE(modelName, id);
+
           res.json(user);
         } catch (error) {
           res.json({ error });
@@ -183,4 +193,5 @@ class ApiEz {
   }
 }
 
-module.exports = ApiEz;
+// TODO: fix count when filter
+// TODO: add object Populated filter e. user__name=bla with "user" as foreign Key

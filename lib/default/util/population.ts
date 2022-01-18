@@ -1,4 +1,4 @@
-function population(allFields: any[]) {
+export default function population(allFields: any[]) {
   return {
     include: allFields.reduce((relation, field) => {
       if (field.relationName) {

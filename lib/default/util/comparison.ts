@@ -2,7 +2,7 @@ const { formatterQueryValue: formatterQuery } = require('./query_formatter.ts');
 
 const options = ['gt', 'gte', 'lt', 'lte'];
 
-function comparison(query, allFields) {
+export default function comparison(query, allFields) {
   const nameFields = allFields
     .reduce((fields, { name, ...rest }) => ({
       ...fields,
@@ -11,6 +11,7 @@ function comparison(query, allFields) {
 
   return Object.keys(query).reduce((filters, key) => {
     const [field, filter] = key.split('__');
+
     if (options.includes(filter)) {
       return {
         ...filters,

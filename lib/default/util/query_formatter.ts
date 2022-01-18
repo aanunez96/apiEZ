@@ -18,8 +18,8 @@ const formatters = {
   DateTime: dateFormatter,
 };
 
-function formatterQueryValue(value: any, type: string) {
+export default function formatterQueryValue(value: any, type: string) {
   return formatters[type](value);
 }
 
-module.exports = { formatterQueryValue };
+module.exports = formatterQueryValue;
