@@ -1,24 +1,24 @@
 {
   "compilerOptions": {
     "baseUrl": "./src",
-    "target": "esnext",
+    "target": "ESNext",
     "lib": [
       "ES2015",
       "ES6",
       "ES7",
       "dom",
       "dom.iterable",
-      "esnext",
+      "esnext"
     ],
     "allowJs": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
-    "allowSyntheticDefaultImports": false,
+    "allowSyntheticDefaultImports": true,
     "allowUnreachableCode": false,
     "strictNullChecks": false,
     "strict": true,
     "forceConsistentCasingInFileNames": true,
-    "module": "esnext",
+    "module": "ESNext",
     "moduleResolution": "node",
     "noImplicitAny": false,
     "noUnusedLocals": false,
@@ -27,5 +27,16 @@
     "isolatedModules": false,
     "noEmit": true,
   },
-  "include": ["src/**/*"]
+  "include": [
+    "./src/**/*",
+    "./lib/**/*"
+  ],
+  "exclude": [
+    "node_modules"
+  ],
+  "ts-node": {
+    "compilerOptions": {
+      "module": "CommonJS"
+    }
+  }
 }

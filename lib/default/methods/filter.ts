@@ -1,6 +1,6 @@
-const { formatterQueryValue: formatter } = require('../util/query_formatter.ts');
+import formatterQueryValue from '../util/query_formatter';
 
-function filter(query, allFields: any[]) {
+export default function filter(query, allFields: any[]) {
   const nameFields = allFields
     .reduce((fields, { name, ...rest }) => ({
       ...fields,
@@ -12,7 +12,7 @@ function filter(query, allFields: any[]) {
       return {
         ...parameters,
         [field]: {
-          equals: formatter(query[field], nameFields[field]),
+          equals: formatterQueryValue(query[field], nameFields[field]),
         },
       };
     }

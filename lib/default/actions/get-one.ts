@@ -1,4 +1,4 @@
-function getOneAction(prismaInstance) {
+export default function getOneAction(prismaInstance) {
   return async (modelName, queryParams) => prismaInstance[modelName].findUnique(queryParams);
 }
 

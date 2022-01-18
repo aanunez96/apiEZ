@@ -1,4 +1,4 @@
-function order(query, allFields: any[]) {
+export default function order(query, allFields: any[]) {
   if (!query?.ordering) {
     return {};
   }
@@ -6,6 +6,7 @@ function order(query, allFields: any[]) {
   const ordering = Array.isArray(query?.ordering) ? query?.ordering : [query?.ordering];
   const orderBy = ordering.reduce((parameters, orderingValue) => {
     const field = orderingValue.replace('-', '');
+
     if (nameFields.includes(field)) {
       return {
         ...parameters,
