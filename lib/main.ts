@@ -6,7 +6,6 @@ import deleteAction from './default/actions/delete';
 
 import order from './default/util/order';
 import population from './default/util/population';
-// import comparison from './default/util/comparison';
 import handleDoubleUnderScore from './default/util/handle_double_underscore';
 import structure from './default/util/structure';
 
