@@ -6,7 +6,7 @@ import deleteAction from './default/actions/delete';
 
 import order from './default/util/order';
 import population from './default/util/population';
-import comparison from './default/util/comparison';
+import handleDoubleUnderScore from './default/util/handle_double_underscore';
 import structure from './default/util/structure';
 
 import filter from './default/methods/filter';
@@ -145,18 +145,24 @@ export default class ApiEz {
         const onPagination = this.models[model]?.options?.pagination || this.methods.onPagination;
 
         try {
+          const where = {
+            ...handleDoubleUnderScore(req.query, fields, this.models),
+            ...onSearch(req.query, fields),
+            ...onFilter(req.query, fields),
+          };
+
           const queryParams = {
-            where: {
-              ...comparison(req.query, fields),
-              ...onSearch(req.query, fields),
-              ...onFilter(req.query, fields),
-            },
+            where,
             ...order(req.query, fields),
             ...onPagination(req.query),
             ...population(fields),
           };
-          const count = await this.prismaInstance[modelName].count();
-          const results = await this.actions.READ(modelName, queryParams, req);
+          const count = await this.prismaInstance[modelName].count({ where });
+          const results = await this.actions.READ(
+            modelName,
+            queryParams,
+            req,
+          );
           const fullUrl = `${req.protocol}://${req.get('host')}${req.url}`;
 
           res.json(structure(req.query, count, results, fullUrl));
@@ -192,6 +198,3 @@ export default class ApiEz {
     });
   }
 }
-
-// TODO: fix count when filter
-// TODO: add object Populated filter e. user__name=bla with "user" as foreign Key
