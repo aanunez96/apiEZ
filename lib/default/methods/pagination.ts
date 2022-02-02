@@ -1,7 +1,7 @@
 export default function pagination(query) {
   const page = parseInt(query?.page, 10);
 
-  if (page <= 0) {
+  if (!query?.page || page <= 0) {
     return {};
   }
 
